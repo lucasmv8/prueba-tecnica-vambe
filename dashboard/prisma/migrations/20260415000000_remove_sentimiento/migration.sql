@@ -1,0 +1,5 @@
+-- AlterTable: Remove sentimiento column
+-- Note: SQLite does not support DROP COLUMN directly in older versions.
+-- The schema change was applied via `prisma db push --accept-data-loss`.
+-- This migration file documents the change for version history.
+-- In a fresh database, the Client table will be created without sentimiento.

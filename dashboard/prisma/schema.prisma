@@ -1,0 +1,40 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Client {
+  id                  String    @id @default(cuid())
+
+  // Datos originales CSV
+  nombre              String
+  correo              String
+  hasDuplicateEmail   Boolean   @default(false)
+  telefono            String
+  fechaReunion        DateTime
+  vendedor            String
+  closed              Boolean
+  transcripcion       String
+
+  // Dimensiones LLM (null = pendiente de análisis)
+  industria           String?
+  tamanioEmpresa      String?
+  volumenMensajes     String?
+  canalDescubrimiento String?
+  painPoint           String?
+  integraciones       String?
+  objeciones          String?
+  urgencia            String?
+  etapaDecision       String?
+  resumenLLM          String?
+
+  analyzedAt          DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@unique([nombre, correo])
+}
