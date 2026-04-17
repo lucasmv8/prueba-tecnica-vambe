@@ -16,7 +16,7 @@ type Page = "resumen" | "analisis" | "clientes";
 export default function DashboardPage() {
   const [activePage, setActivePage] = useState<Page>("resumen");
   const { metrics, loading: loadingMetrics, fetchMetrics } = useMetrics();
-  const { clients, loading: loadingClients, filters, setFilters, fetchClients, refetch } = useClients();
+  const { clients, loading: loadingClients, filters, setFilters, refetch } = useClients();
   const { progress, startAnalysis, stopAnalysis } = useAnalysis();
 
   const handleStartAnalysis = (force: boolean) =>
@@ -31,7 +31,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0D0D0D]">
+    <div className="min-h-screen flex flex-col bg-background">
       <Header
         pendingCount={metrics.kpis.pendingAnalysis}
         totalClients={metrics.kpis.totalClients}
@@ -51,7 +51,7 @@ export default function DashboardPage() {
             {loadingMetrics ? (
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[...Array(4)].map((_, i) => (
-                  <div key={i} className="bg-[#161616] border border-[#2A2A2A] rounded-xl p-5 h-24 animate-pulse" />
+                  <div key={i} className="bg-card border border-border rounded-xl p-5 h-24 animate-pulse" />
                 ))}
               </div>
             ) : (
@@ -78,15 +78,15 @@ export default function DashboardPage() {
             {!loadingMetrics && metrics.byIndustria.some((d) => d.name !== "Sin categorizar") ? (
               <ChartsSection data={metrics} view="analisis" />
             ) : !loadingMetrics ? (
-              <div className="bg-[#161616] border border-[#2A2A2A] rounded-xl p-8 text-center">
-                <p className="text-[#A0A0A0] text-sm">
+              <div className="bg-card border border-border rounded-xl p-8 text-center">
+                <p className="text-muted-foreground text-sm">
                   Los gráficos aparecerán cuando se complete el análisis IA de los clientes.
                 </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {[...Array(4)].map((_, i) => (
-                  <div key={i} className="bg-[#161616] border border-[#2A2A2A] rounded-xl p-5 h-48 animate-pulse" />
+                  <div key={i} className="bg-card border border-border rounded-xl p-5 h-48 animate-pulse" />
                 ))}
               </div>
             )}
@@ -97,7 +97,7 @@ export default function DashboardPage() {
         {activePage === "clientes" && (
           <>
             {loadingClients && clients.clients.length === 0 ? (
-              <div className="bg-[#161616] border border-[#2A2A2A] rounded-xl p-8 animate-pulse h-48" />
+              <div className="bg-card border border-border rounded-xl p-8 animate-pulse h-48" />
             ) : (
               <ClientsTable
                 data={clients}

@@ -13,8 +13,6 @@ interface KPICardsProps {
   kpis: KPIData;
 }
 
-// ─── Modal de Leads Calificados ────────────────────────────────────────────────
-
 function LeadsModal({ onClose }: { onClose: () => void }) {
   useBodyScrollLock();
   const fetcher = useCallback(async () => {
@@ -26,29 +24,27 @@ function LeadsModal({ onClose }: { onClose: () => void }) {
 
   return (
     <ModalContainer onClose={onClose}>
-        {/* Header */}
-        <div className="flex items-start gap-3 px-5 py-4 border-b border-[#2A2A2A]">
+        <div className="flex items-start gap-3 px-5 py-4 border-b border-border">
           <div className="mt-0.5 p-1.5 rounded-lg bg-[#A855F7]/10">
             <Zap size={14} className="text-[#A855F7]" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-white">Leads Calificados</p>
-            <p className="text-xs text-[#606060] mt-1 leading-relaxed">
+            <p className="text-sm font-semibold text-foreground">Leads Calificados</p>
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
               Prospectos abiertos con potencial alto
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-[#606060] hover:text-white hover:bg-[#2A2A2A] transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
           >
             <X size={14} />
           </button>
         </div>
 
-        {/* Body */}
         <div className="flex-1 overflow-y-auto">
           {loading && (
-            <div className="flex items-center justify-center py-12 gap-2 text-[#606060]">
+            <div className="flex items-center justify-center py-12 gap-2 text-muted-foreground">
               <Loader2 size={16} className="animate-spin" />
               <span className="text-sm">Cargando...</span>
             </div>
@@ -57,7 +53,7 @@ function LeadsModal({ onClose }: { onClose: () => void }) {
             <div className="flex items-center justify-center py-12 text-red-400 text-sm">{error}</div>
           )}
           {clients && clients.length === 0 && (
-            <div className="flex items-center justify-center py-12 text-[#606060] text-sm">
+            <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">
               No hay leads calificados
             </div>
           )}
@@ -75,9 +71,8 @@ function LeadsModal({ onClose }: { onClose: () => void }) {
           )}
         </div>
 
-        {/* Footer */}
         {clients && clients.length > 0 && (
-          <div className="px-5 py-3 border-t border-[#1E1E1E] flex items-center justify-end">
+          <div className="px-5 py-3 border-t border-border flex items-center justify-end">
             <span className="text-xs text-[#505050]">
               {clients.length} cliente{clients.length !== 1 ? "s" : ""}
             </span>
@@ -86,8 +81,6 @@ function LeadsModal({ onClose }: { onClose: () => void }) {
     </ModalContainer>
   );
 }
-
-// ─── KPI Cards ─────────────────────────────────────────────────────────────────
 
 export function KPICards({ kpis }: KPICardsProps) {
   const [showLeadsModal, setShowLeadsModal] = useState(false);
@@ -124,7 +117,7 @@ export function KPICards({ kpis }: KPICardsProps) {
       suffix: "",
       subtitle: kpis.topVendedor !== "-" ? `${kpis.topVendedorCloseRate}% tasa de cierre` : "—",
       description: null,
-      subtitleColor: kpis.topVendedorCloseRate >= 60 ? "#4ADE80" : kpis.topVendedorCloseRate >= 40 ? "#FACC15" : "#A0A0A0" as const,
+      subtitleColor: kpis.topVendedorCloseRate >= 60 ? "#4ADE80" : kpis.topVendedorCloseRate >= 40 ? "#D97706" : "#A0A0A0" as const,
       icon: Award,
       highlight: false,
       onClick: undefined,
@@ -136,7 +129,7 @@ export function KPICards({ kpis }: KPICardsProps) {
       suffix: "",
       subtitle: kpis.topIndustria !== "-" ? `${kpis.topIndustriaCloseRate}% tasa de cierre` : "—",
       description: null,
-      subtitleColor: kpis.topIndustriaCloseRate >= 60 ? "#4ADE80" : kpis.topIndustriaCloseRate >= 40 ? "#FACC15" : "#A0A0A0" as const,
+      subtitleColor: kpis.topIndustriaCloseRate >= 60 ? "#4ADE80" : kpis.topIndustriaCloseRate >= 40 ? "#D97706" : "#A0A0A0" as const,
       icon: Building2,
       highlight: false,
       onClick: undefined,
@@ -150,12 +143,12 @@ export function KPICards({ kpis }: KPICardsProps) {
           <div
             key={id}
             onClick={onClick}
-            className={`bg-[#161616] border rounded-xl p-5 flex flex-col gap-3 transition-colors ${
-              highlight ? "border-[#A855F7]/40 hover:border-[#A855F7]/60" : "border-[#2A2A2A] hover:border-[#3A3A3A]"
+            className={`bg-card border rounded-xl p-5 flex flex-col gap-3 transition-colors ${
+              highlight ? "border-[#A855F7]/40 hover:border-[#A855F7]/60" : "border-border hover:border-foreground/20"
             } ${onClick ? "cursor-pointer" : ""}`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-[#A0A0A0] text-xs font-medium uppercase tracking-wider">
+              <span className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
                 {label}
               </span>
               <div
@@ -170,10 +163,10 @@ export function KPICards({ kpis }: KPICardsProps) {
               </div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-white">
+              <div className="text-2xl font-bold text-foreground">
                 {value}
                 {suffix && (
-                  <span className="text-lg font-normal text-[#A0A0A0] ml-0.5">
+                  <span className="text-lg font-normal text-muted-foreground ml-0.5">
                     {suffix}
                   </span>
                 )}
@@ -183,7 +176,7 @@ export function KPICards({ kpis }: KPICardsProps) {
               </div>
             </div>
             {description && (
-              <p className="text-[10px] text-[#505050] leading-relaxed border-t border-[#1E1E1E] pt-2.5">
+              <p className="text-[10px] text-[#505050] leading-relaxed border-t border-border pt-2.5">
                 {description}
               </p>
             )}

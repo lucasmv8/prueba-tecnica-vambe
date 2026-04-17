@@ -48,8 +48,44 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* Vambe dark-first design system */
+/* Vambe light theme */
 :root {
+  --background: #F8F9FA;
+  --foreground: #0D0D0D;
+  --card: #FFFFFF;
+  --card-foreground: #111111;
+  --popover: #FFFFFF;
+  --popover-foreground: #111111;
+  --primary: #2563EB;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F1F3F5;
+  --secondary-foreground: #374151;
+  --muted: #F3F4F6;
+  --muted-foreground: #6B7280;
+  --accent: #EFF6FF;
+  --accent-foreground: #1E40AF;
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: #E5E7EB;
+  --input: #F9FAFB;
+  --ring: #2563EB;
+  --chart-1: #2563EB;
+  --chart-2: #7C3AED;
+  --chart-3: #059669;
+  --chart-4: #D97706;
+  --chart-5: #DC2626;
+  --radius: 0.75rem;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #0D0D0D;
+  --sidebar-primary: #2563EB;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #F1F3F5;
+  --sidebar-accent-foreground: #374151;
+  --sidebar-border: #E5E7EB;
+  --sidebar-ring: #2563EB;
+}
+
+/* Vambe dark theme */
+.dark {
   --background: #0D0D0D;
   --foreground: #FFFFFF;
   --card: #161616;

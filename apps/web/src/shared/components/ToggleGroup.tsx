@@ -17,7 +17,7 @@ export function ToggleGroup<T extends string>({
   activeColor = "#2563EB",
 }: ToggleGroupProps<T>) {
   return (
-    <div className="flex items-center bg-[#1E1E1E] border border-[#2A2A2A] rounded-lg p-0.5 text-xs">
+    <div className="flex items-center bg-secondary border border-border rounded-lg p-0.5 text-xs">
       {options.map((opt) => (
         <button
           key={opt.value}
@@ -25,7 +25,7 @@ export function ToggleGroup<T extends string>({
           className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
             value === opt.value
               ? "text-white font-medium"
-              : "text-[#606060] hover:text-[#A0A0A0]"
+              : "text-muted-foreground hover:text-foreground/70"
           }`}
           style={value === opt.value ? { backgroundColor: activeColor } : undefined}
         >

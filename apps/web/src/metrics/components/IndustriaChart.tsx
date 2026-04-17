@@ -33,10 +33,9 @@ export function IndustriaChart({ data }: IndustriaChartProps) {
   const totalClients = data.reduce((s, d) => s + d.total, 0);
 
   return (
-    <div className="bg-[#161616] border border-[#2A2A2A] rounded-xl overflow-hidden">
-      {/* Header */}
+    <div className="bg-card border border-border rounded-xl overflow-hidden">
       <div className="flex items-center justify-between px-5 py-3">
-        <h3 className="text-base font-semibold text-white">Close Rate por Industria</h3>
+        <h3 className="text-base font-semibold text-foreground">Close Rate por Industria</h3>
 
         <ToggleGroup
           options={INDUSTRIA_TOGGLE_OPTIONS}
@@ -45,11 +44,10 @@ export function IndustriaChart({ data }: IndustriaChartProps) {
         />
       </div>
 
-      <div className="border-t border-[#1E1E1E]">
+      <div className="border-t border-border">
         {viewMode === "closeRate" ? (
           <>
-            {/* Column headers */}
-            <div className="grid grid-cols-[1fr_1fr_40px] gap-3 px-5 py-1.5 border-b border-[#1E1E1E]">
+            <div className="grid grid-cols-[1fr_1fr_40px] gap-3 px-5 py-1.5 border-b border-border">
               <span className="text-[10px] font-medium text-[#505050] uppercase tracking-wider">Industria</span>
               <span className="text-[10px] font-medium text-[#505050] uppercase tracking-wider">% Cierre</span>
               <span className="text-[10px] font-medium text-[#505050] uppercase tracking-wider text-right">Rate</span>
@@ -57,10 +55,10 @@ export function IndustriaChart({ data }: IndustriaChartProps) {
             {sortedByClose.map(({ name, closeRate }) => (
               <div
                 key={name}
-                className="grid grid-cols-[1fr_1fr_40px] gap-3 items-center px-5 py-2.5 border-b border-[#1E1E1E] last:border-0"
+                className="grid grid-cols-[1fr_1fr_40px] gap-3 items-center px-5 py-2.5 border-b border-border last:border-0"
               >
-                <span className="text-xs text-[#A0A0A0] truncate">{capitalizeFirst(name)}</span>
-                <div className="h-1.5 bg-[#1E1E1E] rounded-full overflow-hidden">
+                <span className="text-xs text-muted-foreground truncate">{capitalizeFirst(name)}</span>
+                <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{
@@ -69,14 +67,13 @@ export function IndustriaChart({ data }: IndustriaChartProps) {
                     }}
                   />
                 </div>
-                <span className="text-xs font-semibold text-white text-right shrink-0">
+                <span className="text-xs font-semibold text-foreground text-right shrink-0">
                   {closeRate}%
                 </span>
               </div>
             ))}
           </>
         ) : (
-          /* Pie chart view */
           <div className="px-5 py-4">
             <ResponsiveContainer width="100%" height={200}>
               <PieChart>
@@ -104,7 +101,6 @@ export function IndustriaChart({ data }: IndustriaChartProps) {
               </PieChart>
             </ResponsiveContainer>
 
-            {/* Leyenda */}
             <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-3">
               {pieData.map(({ name, value }, i) => (
                 <div key={name} className="flex items-center gap-2 min-w-0">
@@ -112,8 +108,8 @@ export function IndustriaChart({ data }: IndustriaChartProps) {
                     className="w-2 h-2 rounded-full shrink-0"
                     style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }}
                   />
-                  <span className="text-xs text-[#A0A0A0] truncate">{name}</span>
-                  <span className="text-xs font-semibold text-white ml-auto shrink-0">{value}</span>
+                  <span className="text-xs text-muted-foreground truncate">{name}</span>
+                  <span className="text-xs font-semibold text-foreground ml-auto shrink-0">{value}</span>
                 </div>
               ))}
             </div>

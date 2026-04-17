@@ -25,8 +25,11 @@ export function useMetrics() {
   }, []);
 
   useEffect(() => {
-    fetchMetrics().finally(() => setLoading(false));
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    fetch("/api/metrics")
+      .then((res) => res.json())
+      .then((data: MetricsData) => setMetrics(data))
+      .finally(() => setLoading(false));
+  }, []);
 
   return { metrics, loading, fetchMetrics };
 }

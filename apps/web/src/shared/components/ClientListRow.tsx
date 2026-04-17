@@ -12,7 +12,7 @@ export function ClientListRow({ client, showIndustria = false, infoText }: Clien
   const potColor = potencial ? (POTENTIAL_COLORS[potencial] ?? "#606060") : "#606060";
 
   return (
-    <div className="flex flex-col gap-1.5 px-4 py-3 border-b border-[#1E1E1E] last:border-0 hover:bg-[#1A1A1A] transition-colors">
+    <div className="flex flex-col gap-1.5 px-4 py-3 border-b border-border last:border-0 hover:bg-muted transition-colors">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
@@ -21,7 +21,7 @@ export function ClientListRow({ client, showIndustria = false, infoText }: Clien
               style={{ backgroundColor: potColor }}
               title={`Potencial: ${potencial ?? "—"}`}
             />
-            <span className="text-sm font-medium text-white truncate">{client.nombre}</span>
+            <span className="text-sm font-medium text-foreground truncate">{client.nombre}</span>
           </div>
           <div className="flex items-center gap-2 ml-4 mt-0.5">
             <span className="text-xs text-[#606060]">{client.vendedor}</span>
@@ -40,7 +40,7 @@ export function ClientListRow({ client, showIndustria = false, infoText }: Clien
         )}
       </div>
       {infoText && (
-        <p className="text-xs text-[#808080] leading-relaxed ml-4 line-clamp-2">
+        <p className="text-xs text-muted-foreground leading-relaxed ml-4 line-clamp-2">
           {infoText}
         </p>
       )}

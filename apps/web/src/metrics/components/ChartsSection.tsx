@@ -21,8 +21,8 @@ const AXIS_STYLE = { fill: "#A0A0A0", fontSize: 11 };
 
 function ChartCard({ title, children, fullWidth }: { title: string; children: React.ReactNode; fullWidth?: boolean }) {
   return (
-    <div className={`bg-[#161616] border border-[#2A2A2A] rounded-xl p-5 ${fullWidth ? "lg:col-span-2" : ""}`}>
-      <h3 className="text-sm font-medium text-[#A0A0A0] mb-4 uppercase tracking-wider">
+    <div className={`bg-card border border-border rounded-xl p-5 ${fullWidth ? "lg:col-span-2" : ""}`}>
+      <h3 className="text-sm font-medium text-muted-foreground mb-4 uppercase tracking-wider">
         {title}
       </h3>
       {children}
@@ -47,15 +47,12 @@ export function ChartsSection({ data, view = "all" }: Props) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
 
-      {/* ── Pain Points Cloud ────────────────────────────────────────────── */}
       {showAnalisis && data.topPainPoints.length > 0 && (
         <PainPointsCloud painPoints={data.topPainPoints} />
       )}
 
-      {/* ── Close Rate por Industria ─────────────────────────────────────── */}
       {showAnalisis && <IndustriaChart data={data.byIndustria} />}
 
-      {/* ── Performance por Vendedor ─────────────────────────────────────── */}
       {showResumen && <ChartCard title="Performance por Vendedor">
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={vendedorData} margin={{ left: -10 }}>
@@ -73,7 +70,6 @@ export function ChartsSection({ data, view = "all" }: Props) {
         </ResponsiveContainer>
       </ChartCard>}
 
-      {/* ── Reuniones por Mes ────────────────────────────────────────────── */}
       {showResumen && <ChartCard title="Reuniones por Mes" fullWidth>
         <ResponsiveContainer width="100%" height={200}>
           <BarChart data={data.byMonth} margin={{ left: -10 }}>
@@ -86,7 +82,6 @@ export function ChartsSection({ data, view = "all" }: Props) {
         </ResponsiveContainer>
       </ChartCard>}
 
-      {/* ── Tasa de Conversión Mensual ───────────────────────────────────── */}
       {showResumen && <ChartCard title="Tasa de Conversión Mensual" fullWidth>
         <ResponsiveContainer width="100%" height={200}>
           <ComposedChart data={data.byMonth} margin={{ left: -10, right: 16, top: 16 }}>

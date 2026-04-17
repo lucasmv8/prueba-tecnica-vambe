@@ -14,7 +14,7 @@ export function ModalContainer({
     >
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
       <div
-        className="relative z-10 w-full max-w-lg bg-[#161616] border border-[#2A2A2A] rounded-xl shadow-2xl flex flex-col max-h-[80vh]"
+        className="relative z-10 w-full max-w-lg bg-card border border-border rounded-xl shadow-2xl flex flex-col max-h-[80vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {children}

@@ -21,8 +21,6 @@ interface ClientsTableProps {
   onReanalyze: (id: string) => Promise<void>;
 }
 
-// ─── Filter bar internals ──────────────────────────────────────────────────
-
 interface FilterDef {
   key: keyof Omit<FilterState, "q" | "page">;
   label: string;
@@ -73,7 +71,7 @@ function FilterPill({
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
           active
             ? "bg-[#2563EB]/15 text-[#60A5FA] border-[#2563EB]/40"
-            : "bg-[#1E1E1E] text-[#A0A0A0] border-[#2A2A2A] hover:text-white hover:border-[#3A3A3A]"
+            : "bg-secondary text-muted-foreground border-border hover:text-foreground hover:border-foreground/20"
         }`}
       >
         {activeLabel}
@@ -81,12 +79,12 @@ function FilterPill({
       </button>
 
       {open && !active && (
-        <div className="absolute top-full left-0 mt-1 bg-[#1E1E1E] border border-[#2A2A2A] rounded-xl shadow-xl z-20 min-w-[140px] py-1 overflow-hidden">
+        <div className="absolute top-full left-0 mt-1 bg-popover border border-border rounded-xl shadow-xl z-20 min-w-[140px] py-1 overflow-hidden">
           {def.options.map((opt) => (
             <button
               key={opt.value}
               onMouseDown={() => { onChange(opt.value); setOpen(false); }}
-              className="w-full text-left px-3 py-1.5 text-xs text-[#A0A0A0] hover:text-white hover:bg-[#2A2A2A] transition-colors cursor-pointer"
+              className="w-full text-left px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
             >
               {opt.label}
             </button>
@@ -97,10 +95,8 @@ function FilterPill({
   );
 }
 
-// ─── Tag ──────────────────────────────────────────────────────────────────
-
 function Tag({ value, colorMap }: { value: string | null; colorMap?: Record<string, string> }) {
-  if (!value) return <span className="text-[#A0A0A0] text-xs">—</span>;
+  if (!value) return <span className="text-muted-foreground text-xs">—</span>;
   const color = colorMap?.[value] ?? "#A0A0A0";
   return (
     <span
@@ -111,8 +107,6 @@ function Tag({ value, colorMap }: { value: string | null; colorMap?: Record<stri
     </span>
   );
 }
-
-// ─── Client Detail Modal ───────────────────────────────────────────────────
 
 function ClientDetailModal({
   client,
@@ -150,17 +144,16 @@ function ClientDetailModal({
         onKeyDown={(e) => e.key === "Escape" && onClose()}
         aria-label="Cerrar panel"
       />
-      <div className="fixed right-0 top-0 h-full w-full max-w-[480px] bg-[#161616] border-l border-[#2A2A2A] z-50 flex flex-col shadow-2xl overflow-hidden">
-        {/* Header */}
-        <div className="px-5 py-4 border-b border-[#2A2A2A] flex items-start gap-3">
+      <div className="fixed right-0 top-0 h-full w-full max-w-[480px] bg-card border-l border-border z-50 flex flex-col shadow-2xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-border flex items-start gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5">
-              <span className="text-base font-semibold text-white truncate">{client.nombre}</span>
+              <span className="text-base font-semibold text-foreground truncate">{client.nombre}</span>
               {client.hasDuplicateEmail && (
-                <span title="Email compartido"><AlertTriangle size={12} className="text-amber-400 shrink-0" /></span>
+                <span title="Email compartido"><AlertTriangle size={12} className="text-amber-600 dark:text-amber-400 shrink-0" /></span>
               )}
             </div>
-            <div className="text-xs text-[#A0A0A0]">{client.correo}</div>
+            <div className="text-xs text-muted-foreground">{client.correo}</div>
             <div className="flex items-center gap-2 mt-2 flex-wrap">
               <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
                 client.closed
@@ -186,36 +179,32 @@ function ClientDetailModal({
               onClick={handleReanalyze}
               disabled={loading}
               title="Re-analizar con IA"
-              className="p-1.5 rounded-lg text-[#A0A0A0] hover:text-white hover:bg-[#2A2A2A] disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed"
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed"
             >
               <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
             </button>
-            <button onClick={onClose} className="p-1.5 rounded-lg text-[#A0A0A0] hover:text-white hover:bg-[#2A2A2A] transition-colors cursor-pointer">
+            <button onClick={onClose} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer">
               <X size={14} />
             </button>
           </div>
         </div>
 
-        {/* Body */}
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
-          {/* Transcripción */}
-          <div className="bg-[#111111] border border-[#2A2A2A] rounded-xl p-4">
-            <h4 className="text-xs font-medium text-[#A0A0A0] uppercase tracking-wider mb-2">Transcripción</h4>
-            <p className="text-xs text-[#C0C0C0] leading-relaxed">{client.transcripcion}</p>
+          <div className="bg-muted border border-border rounded-xl p-4">
+            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Transcripción</h4>
+            <p className="text-xs text-foreground leading-relaxed">{client.transcripcion}</p>
           </div>
 
-          {/* Análisis IA */}
           {a ? (
-            <div className="bg-[#111111] border border-[#2A2A2A] rounded-xl p-4 space-y-3">
+            <div className="bg-muted border border-border rounded-xl p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <Brain size={12} className="text-[#A855F7]" />
-                <h4 className="text-xs font-medium text-[#A0A0A0] uppercase tracking-wider">Análisis IA</h4>
+                <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Análisis IA</h4>
               </div>
 
-              {/* Lectura de negocio */}
               <div className="space-y-2">
                 {a.conclusionEjecutiva && (
-                  <p className="text-xs text-white bg-[#2563EB]/10 border border-[#2563EB]/20 rounded-lg px-3 py-2 leading-relaxed">
+                  <p className="text-xs text-foreground bg-[#2563EB]/10 border border-[#2563EB]/20 rounded-lg px-3 py-2 leading-relaxed">
                     {a.conclusionEjecutiva}
                   </p>
                 )}
@@ -226,23 +215,22 @@ function ClientDetailModal({
                       <div className="text-[10px] text-[#10B981] uppercase tracking-wider font-medium mb-0.5">
                         Próxima acción
                       </div>
-                      <p className="text-xs text-[#C0C0C0]">{a.proximaAccion}</p>
+                      <p className="text-xs text-foreground">{a.proximaAccion}</p>
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Meta fields */}
               <div className="grid grid-cols-2 gap-2">
                 {metaFields.map(({ label, value, colorMap }) => (
-                  <div key={label} className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg px-3 py-2">
+                  <div key={label} className="bg-card border border-border rounded-lg px-3 py-2">
                     <div className="text-[10px] text-[#505050] uppercase tracking-wider mb-0.5">{label}</div>
-                    <div className="text-xs text-white">
+                    <div className="text-xs text-foreground">
                       {value
                         ? colorMap
                           ? <Tag value={value} colorMap={colorMap} />
                           : capitalizeFirst(value)
-                        : <span className="text-[#A0A0A0]">—</span>
+                        : <span className="text-muted-foreground">—</span>
                       }
                     </div>
                   </div>
@@ -252,19 +240,19 @@ function ClientDetailModal({
               {a.painPoint && (
                 <div className="bg-[#A855F7]/5 border border-[#A855F7]/20 rounded-lg px-3 py-2">
                   <div className="text-[10px] text-[#A855F7] uppercase tracking-wider mb-1">Pain Point</div>
-                  <p className="text-xs text-[#C0C0C0]">{a.painPoint}</p>
+                  <p className="text-xs text-foreground">{a.painPoint}</p>
                 </div>
               )}
               {a.integraciones && (
-                <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg px-3 py-2">
+                <div className="bg-card border border-border rounded-lg px-3 py-2">
                   <div className="text-[10px] text-[#505050] uppercase tracking-wider mb-0.5">Integraciones</div>
-                  <div className="text-xs text-white">{capitalizeFirst(a.integraciones)}</div>
+                  <div className="text-xs text-foreground">{capitalizeFirst(a.integraciones)}</div>
                 </div>
               )}
             </div>
           ) : (
-            <div className="bg-[#111111] border border-[#2A2A2A] rounded-xl p-4">
-              <p className="text-xs text-[#A0A0A0]">Pendiente de análisis</p>
+            <div className="bg-muted border border-border rounded-xl p-4">
+              <p className="text-xs text-muted-foreground">Pendiente de análisis</p>
             </div>
           )}
         </div>
@@ -272,8 +260,6 @@ function ClientDetailModal({
     </>
   );
 }
-
-// ─── Main component ────────────────────────────────────────────────────────
 
 export function ClientsTable({ data, page, filters, onPageChange, onFiltersChange, onReanalyze }: ClientsTableProps) {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -297,22 +283,19 @@ export function ClientsTable({ data, page, filters, onPageChange, onFiltersChang
         />
       )}
 
-      <div className="bg-[#161616] border border-[#2A2A2A] rounded-xl">
-        {/* Search + Filters bar */}
-        <div className="px-4 py-3 border-b border-[#2A2A2A] flex items-center gap-3 flex-wrap">
-          {/* Search */}
+      <div className="bg-card border border-border rounded-xl">
+        <div className="px-4 py-3 border-b border-border flex items-center gap-3 flex-wrap">
           <div className="relative flex-1 min-w-[180px]">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#505050]" />
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
               placeholder="Buscar por nombre o correo..."
               value={filters.q}
               onChange={(e) => setFilter("q", e.target.value)}
-              className="w-full bg-[#111111] border border-[#2A2A2A] rounded-full pl-8 pr-4 py-1.5 text-xs text-white placeholder:text-[#505050] focus:outline-none focus:border-[#2563EB]/60 transition-colors"
+              className="w-full bg-muted border border-border rounded-full pl-8 pr-4 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[#2563EB]/60 transition-colors"
             />
           </div>
 
-          {/* Filter pills */}
           <div className="flex items-center gap-2 flex-wrap">
             {FILTER_DEFS.map((def) => (
               <FilterPill
@@ -325,11 +308,10 @@ export function ClientsTable({ data, page, filters, onPageChange, onFiltersChang
           </div>
         </div>
 
-        {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-[#2A2A2A]">
+              <tr className="border-b border-border">
                 {["Cliente", "Industria", "Vendedor", "Fecha", "Estado", "Potencial", ""].map((h) => (
                   <th key={h} className="px-4 py-2.5 text-xs font-medium text-[#505050] uppercase tracking-wider whitespace-nowrap">
                     {h}
@@ -339,23 +321,23 @@ export function ClientsTable({ data, page, filters, onPageChange, onFiltersChang
             </thead>
             <tbody>
               {(data.clients ?? []).map((client) => (
-                <tr key={client.id} className="border-b border-[#2A2A2A] hover:bg-[#1A1A1A] transition-colors">
+                <tr key={client.id} className="border-b border-border hover:bg-muted transition-colors">
                   <td className="px-4 py-3">
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <span className="text-sm font-medium text-white">{client.nombre}</span>
+                        <span className="text-sm font-medium text-foreground">{client.nombre}</span>
                         {client.hasDuplicateEmail && (
-                          <span title="Email compartido"><AlertTriangle size={11} className="text-amber-400 shrink-0" /></span>
+                          <span title="Email compartido"><AlertTriangle size={11} className="text-amber-600 dark:text-amber-400 shrink-0" /></span>
                         )}
                       </div>
-                      <div className="text-xs text-[#A0A0A0]">{client.correo}</div>
+                      <div className="text-xs text-muted-foreground">{client.correo}</div>
                     </div>
                   </td>
                   <td className="px-4 py-3">
                     <Tag value={client.analysis?.industria ?? null} />
                   </td>
-                  <td className="px-4 py-3 text-sm text-[#A0A0A0]">{client.vendedor}</td>
-                  <td className="px-4 py-3 text-xs text-[#A0A0A0] whitespace-nowrap">{formatDate(client.fechaReunion)}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{client.vendedor}</td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{formatDate(client.fechaReunion)}</td>
                   <td className="px-4 py-3">
                     <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       client.closed
@@ -386,7 +368,7 @@ export function ClientsTable({ data, page, filters, onPageChange, onFiltersChang
                         onClick={() => handleReanalyze(client.id)}
                         disabled={reanalyzingId === client.id}
                         title={client.analysis === null ? "Analizar con IA" : "Re-analizar con IA"}
-                        className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-[#1E1E1E] text-[#A0A0A0] border border-[#2A2A2A] hover:text-white hover:border-[#3A3A3A] disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                        className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-secondary text-muted-foreground border border-border hover:text-foreground hover:border-foreground/20 disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed"
                       >
                         {reanalyzingId === client.id ? (
                           <RefreshCw size={11} className="animate-spin" />
@@ -403,7 +385,7 @@ export function ClientsTable({ data, page, filters, onPageChange, onFiltersChang
               ))}
               {data.clients.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-[#A0A0A0] text-sm">
+                  <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground text-sm">
                     No se encontraron clientes con los filtros aplicados
                   </td>
                 </tr>
@@ -412,9 +394,8 @@ export function ClientsTable({ data, page, filters, onPageChange, onFiltersChang
           </table>
         </div>
 
-        {/* Pagination */}
-        <div className="px-5 py-3 border-t border-[#2A2A2A] flex items-center justify-between">
-          <span className="text-xs text-[#A0A0A0]">
+        <div className="px-5 py-3 border-t border-border flex items-center justify-between">
+          <span className="text-xs text-muted-foreground">
             Página {page} de {data.totalPages ?? 0} · {data.total ?? 0} resultado{(data.total ?? 0) !== 1 ? "s" : ""}
           </span>
           {(data.totalPages ?? 0) > 1 && (
@@ -422,14 +403,14 @@ export function ClientsTable({ data, page, filters, onPageChange, onFiltersChang
               <button
                 onClick={() => onPageChange(page - 1)}
                 disabled={page <= 1}
-                className="p-1.5 rounded-lg text-[#A0A0A0] hover:text-white hover:bg-[#2A2A2A] disabled:opacity-30 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 transition-colors cursor-pointer disabled:cursor-not-allowed"
               >
                 <ChevronLeft size={14} />
               </button>
               <button
                 onClick={() => onPageChange(page + 1)}
                 disabled={page >= (data.totalPages ?? 0)}
-                className="p-1.5 rounded-lg text-[#A0A0A0] hover:text-white hover:bg-[#2A2A2A] disabled:opacity-30 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 transition-colors cursor-pointer disabled:cursor-not-allowed"
               >
                 <ChevronRight size={14} />
               </button>

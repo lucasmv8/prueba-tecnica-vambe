@@ -17,24 +17,24 @@ export function AnalysisBanner({ progress, onStop }: AnalysisBannerProps) {
       : 0;
 
   return (
-    <div className="bg-[#161616] border-b border-[#2A2A2A] px-6 py-3">
+    <div className="bg-card border-b border-border px-6 py-3">
       <div className="max-w-[1400px] mx-auto">
         {progress.status === "running" && (
           <div className="flex items-center gap-3">
             <Loader2 size={14} className="animate-spin text-[#2563EB] shrink-0" />
             <div className="flex-1">
               <div className="flex justify-between items-center mb-1.5">
-                <span className="text-xs text-[#A0A0A0]">
+                <span className="text-xs text-muted-foreground">
                   Analizando transcripciones con IA
                   {progress.currentName && (
-                    <span className="text-white ml-1">— {progress.currentName}</span>
+                    <span className="text-foreground ml-1">— {progress.currentName}</span>
                   )}
                 </span>
-                <span className="text-xs font-medium text-white">
+                <span className="text-xs font-medium text-foreground">
                   {progress.processed}/{progress.total} ({percent}%)
                 </span>
               </div>
-              <div className="h-1 bg-[#2A2A2A] rounded-full overflow-hidden">
+              <div className="h-1 bg-border rounded-full overflow-hidden">
                 <div
                   className="h-full bg-[#2563EB] rounded-full transition-all duration-300"
                   style={{ width: `${percent}%` }}
@@ -42,7 +42,6 @@ export function AnalysisBanner({ progress, onStop }: AnalysisBannerProps) {
               </div>
             </div>
 
-            {/* Botón detener */}
             <button
               onClick={onStop}
               title="Detener análisis"
