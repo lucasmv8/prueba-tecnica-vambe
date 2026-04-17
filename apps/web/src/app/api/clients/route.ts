@@ -19,7 +19,8 @@ export async function GET(request: Request) {
     });
 
     return Response.json(clients);
-  } catch {
+  } catch (e) {
+    console.error("[/api/clients]", e);
     return Response.json({ error: "Error al obtener clientes" }, { status: 500 });
   }
 }
