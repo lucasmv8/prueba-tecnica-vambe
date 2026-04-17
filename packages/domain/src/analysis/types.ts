@@ -1,14 +1,12 @@
 export interface AnalysisResult {
   industria: string;
-  tamanioEmpresa: string;
   volumenMensajes: string;
   canalDescubrimiento: string;
   painPoint: string;
   integraciones: string;
-  objeciones: string;
-  urgencia: string;
-  etapaDecision: string;
-  resumenLLM: string;
+  potencial: string;
+  conclusionEjecutiva: string;
+  proximaAccion: string;
 }
 
 export interface AnalysisProgress {

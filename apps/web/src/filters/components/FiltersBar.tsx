@@ -3,6 +3,12 @@
 import { Search, X } from "lucide-react";
 import type { FilterState } from "@vambe/domain";
 import { capitalizeFirst } from "@vambe/ui-system";
+import {
+  VENDOR_OPTIONS,
+  INDUSTRY_OPTIONS,
+  ESTADO_OPTIONS,
+  POTENCIAL_OPTIONS,
+} from "@/filters/lib/filter-options";
 
 interface FilterGroup {
   key: keyof Omit<FilterState, "q" | "page">;
@@ -14,38 +20,22 @@ const FILTER_GROUPS: FilterGroup[] = [
   {
     key: "vendedor",
     label: "Vendedor",
-    options: ["Toro", "Puma", "Zorro", "Boa", "Tiburón"],
+    options: [...VENDOR_OPTIONS],
   },
   {
     key: "closed",
     label: "Estado",
-    options: ["true:Cerrado", "false:Abierto"],
+    options: ESTADO_OPTIONS.map((o) => `${o.value}:${o.label}`),
   },
   {
     key: "industria",
     label: "Industria",
-    options: [
-      "finanzas",
-      "salud",
-      "retail",
-      "educacion",
-      "logistica",
-      "turismo",
-      "tecnologia",
-      "moda",
-      "restaurante",
-      "consultoria",
-    ],
+    options: [...INDUSTRY_OPTIONS],
   },
   {
-    key: "urgencia",
-    label: "Urgencia",
-    options: ["alta", "media", "baja"],
-  },
-  {
-    key: "etapaDecision",
-    label: "Etapa",
-    options: ["explorando", "evaluando:Analizando", "listo_para_comprar:Listo para comprar"],
+    key: "potencial",
+    label: "Potencial",
+    options: [...POTENCIAL_OPTIONS],
   },
 ];
 
@@ -59,8 +49,7 @@ export function FiltersBar({ filters, onChange }: FiltersBarProps) {
     filters.vendedor,
     filters.industria,
     filters.closed,
-    filters.urgencia,
-    filters.etapaDecision,
+    filters.potencial,
     filters.q,
   ].filter(Boolean).length;
 
@@ -69,7 +58,7 @@ export function FiltersBar({ filters, onChange }: FiltersBarProps) {
   };
 
   const clearAll = () => {
-    onChange({ vendedor: "", industria: "", closed: "", urgencia: "", etapaDecision: "", q: "", page: 1 });
+    onChange({ vendedor: "", industria: "", closed: "", potencial: "", q: "", page: 1 });
   };
 
   return (

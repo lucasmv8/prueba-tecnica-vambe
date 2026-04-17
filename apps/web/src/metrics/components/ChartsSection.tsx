@@ -13,17 +13,9 @@ import {
   Cell,
 } from "recharts";
 import type { MetricsData } from "@vambe/domain";
-import { capitalizeFirst } from "@vambe/ui-system";
+import { capitalizeFirst, TOOLTIP_STYLE } from "@vambe/ui-system";
 import { PainPointsCloud } from "./PainPointsCloud";
 import { IndustriaChart } from "./IndustriaChart";
-
-const TOOLTIP_STYLE = {
-  backgroundColor: "#1E1E1E",
-  border: "1px solid #2A2A2A",
-  borderRadius: "8px",
-  color: "#FFFFFF",
-  fontSize: "12px",
-};
 
 const AXIS_STYLE = { fill: "#A0A0A0", fontSize: 11 };
 
@@ -36,16 +28,6 @@ function ChartCard({ title, children, fullWidth }: { title: string; children: Re
       {children}
     </div>
   );
-}
-
-// Colores para el embudo: más oscuro = etapa más avanzada
-const FUNNEL_COLORS = ["#1D4ED8", "#2563EB", "#3B82F6"];
-
-// Color por close rate: verde si alto, amarillo si medio, rojo si bajo
-function closeRateColor(rate: number): string {
-  if (rate >= 60) return "#4ADE80";
-  if (rate >= 35) return "#FACC15";
-  return "#F87171";
 }
 
 interface Props {
@@ -68,55 +50,6 @@ export function ChartsSection({ data, view = "all" }: Props) {
       {/* ── Pain Points Cloud ────────────────────────────────────────────── */}
       {showAnalisis && data.topPainPoints.length > 0 && (
         <PainPointsCloud painPoints={data.topPainPoints} />
-      )}
-
-      {/* ── Embudo de Decisión ───────────────────────────────────────────── */}
-      {showResumen && data.byEtapaDecision.length > 0 && (
-        <ChartCard title="Leads por Etapa">
-          <div className="flex flex-col gap-3">
-            {data.byEtapaDecision.map(({ label, total, cerrados, closeRate }, i) => {
-              const maxTotal = Math.max(...data.byEtapaDecision.map((e) => e.total));
-              const barWidth = maxTotal > 0 ? (total / maxTotal) * 100 : 0;
-              const openLeads = total - cerrados;
-              return (
-                <div key={label} className="flex flex-col gap-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-[#A0A0A0]">{label}</span>
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-[#4ADE80]" title="Cerrados">{cerrados} ganados</span>
-                      <span className="text-[#505050]">·</span>
-                      <span className="text-[#606060]" title="Abiertos">{openLeads} abiertos</span>
-                      <span
-                        className="font-semibold w-9 text-right"
-                        style={{ color: closeRateColor(closeRate) }}
-                      >
-                        {closeRate}%
-                      </span>
-                    </div>
-                  </div>
-                  <div className="relative h-7">
-                    <div className="absolute inset-0 bg-[#1E1E1E] rounded-md" />
-                    <div
-                      className="absolute inset-y-0 left-0 rounded-md transition-all duration-500 flex items-center"
-                      style={{
-                        width: `${barWidth}%`,
-                        background: `linear-gradient(90deg, ${FUNNEL_COLORS[i] ?? "#3B82F6"}, ${FUNNEL_COLORS[i] ?? "#3B82F6"}99)`,
-                        minWidth: "2.5rem",
-                      }}
-                    >
-                      <span className="text-xs font-semibold text-white px-2 whitespace-nowrap">
-                        {total}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <p className="text-[10px] text-[#505050] mt-3">
-            % tasa de cierre por etapa
-          </p>
-        </ChartCard>
       )}
 
       {/* ── Close Rate por Industria ─────────────────────────────────────── */}

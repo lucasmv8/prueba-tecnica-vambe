@@ -1,51 +1,45 @@
 import { prisma } from "@vambe/database";
-import type { MetricsData, BarChartEntry, DuplicateEmailGroup, PainPointEntry, FunnelEntry } from "./types";
+import type { MetricsData, BarChartEntry, DuplicateEmailGroup, PainPointEntry, AlertEntry } from "./types";
 
 function computeCloseRate(total: number, closed: number) {
   return total === 0 ? 0 : Math.round((closed / total) * 100);
 }
 
-const ETAPA_ORDER: { stage: string; label: string }[] = [
-  { stage: "explorando",         label: "Explorando" },
-  { stage: "evaluando",          label: "Evaluando" },
-  { stage: "listo_para_comprar", label: "Listo para comprar" },
-];
-
 export async function getMetrics(): Promise<MetricsData> {
   const allClients = await prisma.client.findMany({
     select: {
+      id: true,
       closed: true,
       vendedor: true,
-      industria: true,
-      canalDescubrimiento: true,
       fechaReunion: true,
-      analyzedAt: true,
       correo: true,
       nombre: true,
       hasDuplicateEmail: true,
-      painPoint: true,
-      urgencia: true,
-      etapaDecision: true,
+      analysis: {
+        select: {
+          industria: true,
+          painPoint: true,
+          potencial: true,
+          analyzedAt: true,
+          conclusionEjecutiva: true,
+          proximaAccion: true,
+        },
+      },
     },
   });
 
   const total = allClients.length;
   const closed = allClients.filter((c) => c.closed).length;
-  const pending = allClients.filter((c) => !c.analyzedAt).length;
+  const pending = allClients.filter((c) => !c.analysis).length;
 
   const leadsCalificados = allClients.filter(
-    (c) =>
-      !c.closed &&
-      c.analyzedAt &&
-      (c.urgencia === "alta" ||
-        c.etapaDecision === "listo_para_comprar" ||
-        c.etapaDecision === "evaluando")
+    (c) => !c.closed && c.analysis?.potencial === "alta"
   ).length;
 
-  // ── By Industria (map only — final array built after byMonth) ──────────────
+  // ── By Industria ───────────────────────────────────────────────────────────
   const industriaMap = new Map<string, { total: number; closed: number }>();
   for (const c of allClients) {
-    const key = c.industria ?? "Sin categorizar";
+    const key = c.analysis?.industria ?? "Sin categorizar";
     const entry = industriaMap.get(key) ?? { total: 0, closed: 0 };
     entry.total++;
     if (c.closed) entry.closed++;
@@ -76,22 +70,6 @@ export async function getMetrics(): Promise<MetricsData> {
       .sort((a, b) => b.closeRate - a.closeRate)[0];
   const topVendedor = topVendedorEntry?.name ?? "-";
   const topVendedorCloseRate = topVendedorEntry?.closeRate ?? 0;
-
-  // ── By Etapa de Decisión (Embudo) ──────────────────────────────────────────
-  const etapaMap = new Map<string, { total: number; closed: number }>();
-  for (const c of allClients) {
-    if (!c.analyzedAt || !c.etapaDecision) continue;
-    const entry = etapaMap.get(c.etapaDecision) ?? { total: 0, closed: 0 };
-    entry.total++;
-    if (c.closed) entry.closed++;
-    etapaMap.set(c.etapaDecision, entry);
-  }
-  const byEtapaDecision: FunnelEntry[] = ETAPA_ORDER
-    .filter(({ stage }) => etapaMap.has(stage))
-    .map(({ stage, label }) => {
-      const { total, closed } = etapaMap.get(stage)!;
-      return { stage, label, total, cerrados: closed, closeRate: computeCloseRate(total, closed) };
-    });
 
   // ── By Month ───────────────────────────────────────────────────────────────
   const monthMap = new Map<string, { total: number; closed: number }>();
@@ -141,11 +119,11 @@ export async function getMetrics(): Promise<MetricsData> {
     ([correo, clientes]) => ({ correo, clientes })
   );
 
-  // ── Pain Points con tasa de cierre ────────────────────────────────────────
+  // ── Pain Points ────────────────────────────────────────────────────────────
   const painPointMap = new Map<string, { count: number; cerrados: number }>();
   for (const c of allClients) {
-    if (!c.painPoint || !c.analyzedAt) continue;
-    const normalized = c.painPoint.trim().toLowerCase().normalize("NFC").replace(/[.,;!?]+$/, "").replace(/\s+/g, " ");
+    if (!c.analysis?.painPoint) continue;
+    const normalized = c.analysis.painPoint.trim().toLowerCase().normalize("NFC").replace(/[.,;!?]+$/, "").replace(/\s+/g, " ");
     if (normalized.length > 3) {
       const entry = painPointMap.get(normalized) ?? { count: 0, cerrados: 0 };
       entry.count++;
@@ -163,6 +141,42 @@ export async function getMetrics(): Promise<MetricsData> {
     .sort((a, b) => b.count - a.count)
     .slice(0, 10);
 
+  // ── Señales de Atención ────────────────────────────────────────────────────
+  const alertas: AlertEntry[] = [];
+  for (const c of allClients) {
+    if (!c.analysis) continue;
+    const { potencial } = c.analysis;
+    if (!c.closed && potencial === "alta") {
+      alertas.push({
+        clientId: c.id,
+        nombre: c.nombre,
+        correo: c.correo,
+        vendedor: c.vendedor,
+        tipo: "potencial_no_cerrado",
+        etiqueta: "Alto potencial sin cierre",
+        severidad: "warning",
+        industria: c.analysis.industria,
+        painPoint: c.analysis.painPoint,
+        conclusionEjecutiva: c.analysis.conclusionEjecutiva,
+        proximaAccion: c.analysis.proximaAccion,
+      });
+    } else if (c.closed && potencial === "baja") {
+      alertas.push({
+        clientId: c.id,
+        nombre: c.nombre,
+        correo: c.correo,
+        vendedor: c.vendedor,
+        tipo: "cierre_bajo_potencial",
+        etiqueta: "Cierre con potencial bajo",
+        severidad: "info",
+        industria: c.analysis.industria,
+        painPoint: c.analysis.painPoint,
+        conclusionEjecutiva: c.analysis.conclusionEjecutiva,
+        proximaAccion: c.analysis.proximaAccion,
+      });
+    }
+  }
+
   return {
     kpis: {
       totalClients: total,
@@ -177,8 +191,8 @@ export async function getMetrics(): Promise<MetricsData> {
     byIndustria,
     byVendedor,
     byMonth,
-    byEtapaDecision,
     duplicateEmails,
     topPainPoints,
+    alertas,
   };
 }

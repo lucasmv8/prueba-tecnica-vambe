@@ -8,22 +8,16 @@ export interface BatchProgress {
   currentName?: string;
 }
 
-/**
- * Analiza todos los clientes pendientes (analyzedAt = null) o todos si force=true.
- * Envía grupos de 15 clientes en UNA SOLA llamada a la API → ~4 llamadas para 60 clientes.
- * Llama al callback onProgress después de guardar cada cliente en DB.
- */
 export async function analyzeAll(
   force: boolean,
   onProgress?: (progress: BatchProgress) => void
 ): Promise<void> {
   const clients = await prisma.client.findMany({
-    where: force ? undefined : { analyzedAt: null },
+    where: force ? undefined : { analysis: null },
     select: { id: true, nombre: true, transcripcion: true },
   });
 
   const total = clients.length;
-
   if (total === 0) return;
 
   onProgress?.({ processed: 0, total });
@@ -41,19 +35,28 @@ export async function analyzeAll(
         batch.map(async (client, idx) => {
           try {
             const result = results[idx];
-            await prisma.client.update({
-              where: { id: client.id },
-              data: {
+            await prisma.clientAnalysis.upsert({
+              where: { clientId: client.id },
+              create: {
+                clientId: client.id,
                 industria: result.industria,
-                tamanioEmpresa: result.tamanioEmpresa,
                 volumenMensajes: result.volumenMensajes,
                 canalDescubrimiento: result.canalDescubrimiento,
                 painPoint: result.painPoint,
                 integraciones: result.integraciones,
-                objeciones: result.objeciones,
-                urgencia: result.urgencia,
-                etapaDecision: result.etapaDecision,
-                resumenLLM: result.resumenLLM,
+                potencial: result.potencial,
+                conclusionEjecutiva: result.conclusionEjecutiva,
+                proximaAccion: result.proximaAccion,
+              },
+              update: {
+                industria: result.industria,
+                volumenMensajes: result.volumenMensajes,
+                canalDescubrimiento: result.canalDescubrimiento,
+                painPoint: result.painPoint,
+                integraciones: result.integraciones,
+                potencial: result.potencial,
+                conclusionEjecutiva: result.conclusionEjecutiva,
+                proximaAccion: result.proximaAccion,
                 analyzedAt: new Date(),
               },
             });
@@ -75,9 +78,6 @@ export async function analyzeAll(
   }
 }
 
-/**
- * Re-analiza un cliente específico por su ID.
- */
 export async function analyzeOne(id: string): Promise<void> {
   const client = await prisma.client.findUnique({
     where: { id },
@@ -88,29 +88,35 @@ export async function analyzeOne(id: string): Promise<void> {
 
   const result = await analyzeTranscription(client.transcripcion, client.nombre, client.id);
 
-  await prisma.client.update({
-    where: { id },
-    data: {
+  await prisma.clientAnalysis.upsert({
+    where: { clientId: id },
+    create: {
+      clientId: id,
       industria: result.industria,
-      tamanioEmpresa: result.tamanioEmpresa,
       volumenMensajes: result.volumenMensajes,
       canalDescubrimiento: result.canalDescubrimiento,
       painPoint: result.painPoint,
       integraciones: result.integraciones,
-      objeciones: result.objeciones,
-      urgencia: result.urgencia,
-      etapaDecision: result.etapaDecision,
-      resumenLLM: result.resumenLLM,
+      potencial: result.potencial,
+      conclusionEjecutiva: result.conclusionEjecutiva,
+      proximaAccion: result.proximaAccion,
+    },
+    update: {
+      industria: result.industria,
+      volumenMensajes: result.volumenMensajes,
+      canalDescubrimiento: result.canalDescubrimiento,
+      painPoint: result.painPoint,
+      integraciones: result.integraciones,
+      potencial: result.potencial,
+      conclusionEjecutiva: result.conclusionEjecutiva,
+      proximaAccion: result.proximaAccion,
       analyzedAt: new Date(),
     },
   });
 }
 
-/**
- * Retorna el conteo de clientes sin analizar.
- */
 export async function getPendingCount(): Promise<number> {
   return prisma.client.count({
-    where: { analyzedAt: null },
+    where: { analysis: null },
   });
 }

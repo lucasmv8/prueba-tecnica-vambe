@@ -36,16 +36,13 @@ function dryRunBatch(clients: BatchInput[]): AnalysisResult[] {
 
   return clients.map((c) => ({
     industria: "tecnologia",
-    tamanioEmpresa: "mediana",
     volumenMensajes: "medio",
     canalDescubrimiento: "referido",
-    painPoint: `[DRY RUN] Pain point de ${c.nombre}`,
+    painPoint: "alto volumen de consultas repetitivas",
     integraciones: "CRM, WhatsApp",
-    objeciones: "costo",
-    urgencia: "media",
-    etapaDecision: "evaluando",
-    sentimiento: "positivo",
-    resumenLLM: `[DRY RUN] Cliente ${c.nombre} procesado en modo simulación.`,
+    potencial: "media",
+    conclusionEjecutiva: `[DRY RUN] Cliente ${c.nombre} procesado en modo simulación.`,
+    proximaAccion: "Agendar demo técnica esta semana",
   }));
 }
 

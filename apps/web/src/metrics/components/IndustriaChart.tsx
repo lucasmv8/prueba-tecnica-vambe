@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import type { BarChartEntry } from "@vambe/domain";
-import { capitalizeFirst, CHART_COLORS } from "@vambe/ui-system";
+import { capitalizeFirst, CHART_COLORS, TOOLTIP_STYLE } from "@vambe/ui-system";
+import { ToggleGroup } from "@/shared/components/ToggleGroup";
 
 type ViewMode = "closeRate" | "cantidad";
 
@@ -11,13 +12,10 @@ interface IndustriaChartProps {
   data: BarChartEntry[];
 }
 
-const TOOLTIP_STYLE = {
-  backgroundColor: "#1E1E1E",
-  border: "1px solid #2A2A2A",
-  borderRadius: "8px",
-  color: "#FFFFFF",
-  fontSize: "12px",
-};
+const INDUSTRIA_TOGGLE_OPTIONS: { value: ViewMode; label: string }[] = [
+  { value: "closeRate", label: "Close Rate" },
+  { value: "cantidad", label: "Cantidad" },
+];
 
 export function IndustriaChart({ data }: IndustriaChartProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("closeRate");
@@ -40,28 +38,11 @@ export function IndustriaChart({ data }: IndustriaChartProps) {
       <div className="flex items-center justify-between px-5 py-3">
         <h3 className="text-base font-semibold text-white">Close Rate por Industria</h3>
 
-        <div className="flex items-center bg-[#1E1E1E] border border-[#2A2A2A] rounded-lg p-0.5 text-xs">
-          <button
-            onClick={() => setViewMode("closeRate")}
-            className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
-              viewMode === "closeRate"
-                ? "bg-[#2563EB] text-white font-medium"
-                : "text-[#606060] hover:text-[#A0A0A0]"
-            }`}
-          >
-            Close Rate
-          </button>
-          <button
-            onClick={() => setViewMode("cantidad")}
-            className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
-              viewMode === "cantidad"
-                ? "bg-[#2563EB] text-white font-medium"
-                : "text-[#606060] hover:text-[#A0A0A0]"
-            }`}
-          >
-            Cantidad
-          </button>
-        </div>
+        <ToggleGroup
+          options={INDUSTRIA_TOGGLE_OPTIONS}
+          value={viewMode}
+          onChange={setViewMode}
+        />
       </div>
 
       <div className="border-t border-[#1E1E1E]">

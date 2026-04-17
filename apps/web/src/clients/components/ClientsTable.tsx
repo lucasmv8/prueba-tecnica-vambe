@@ -1,9 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { RefreshCw, ChevronLeft, ChevronRight, AlertTriangle, X, Brain, Eye, Search, ChevronDown, Sparkles } from "lucide-react";
+import { useState } from "react";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+import { RefreshCw, ChevronLeft, ChevronRight, AlertTriangle, X, Brain, Eye, Search, ChevronDown, Sparkles, ArrowRight } from "lucide-react";
 import type { Client, ClientsResponse, FilterState } from "@vambe/domain";
-import { formatDate, capitalizeFirst, URGENCY_COLORS } from "@vambe/ui-system";
+import { formatDate, capitalizeFirst, POTENTIAL_COLORS } from "@vambe/ui-system";
+import {
+  VENDOR_OPTIONS,
+  INDUSTRY_OPTIONS,
+  ESTADO_OPTIONS,
+  POTENCIAL_OPTIONS,
+} from "@/filters/lib/filter-options";
 
 interface ClientsTableProps {
   data: ClientsResponse;
@@ -26,36 +33,22 @@ const FILTER_DEFS: FilterDef[] = [
   {
     key: "vendedor",
     label: "Vendedor",
-    options: ["Toro", "Puma", "Zorro", "Boa", "Tiburón"].map((v) => ({ value: v, label: v })),
+    options: [...VENDOR_OPTIONS].map((v) => ({ value: v, label: v })),
   },
   {
     key: "industria",
     label: "Industria",
-    options: ["finanzas", "salud", "retail", "educacion", "logistica", "turismo", "tecnologia", "moda", "restaurante", "consultoria"].map(
-      (v) => ({ value: v, label: capitalizeFirst(v) })
-    ),
+    options: [...INDUSTRY_OPTIONS].map((v) => ({ value: v, label: capitalizeFirst(v) })),
   },
   {
     key: "closed",
     label: "Estado",
-    options: [
-      { value: "true", label: "Cerrado" },
-      { value: "false", label: "Abierto" },
-    ],
+    options: [...ESTADO_OPTIONS],
   },
   {
-    key: "urgencia",
-    label: "Urgencia",
-    options: ["alta", "media", "baja"].map((v) => ({ value: v, label: capitalizeFirst(v) })),
-  },
-  {
-    key: "etapaDecision",
-    label: "Etapa",
-    options: [
-      { value: "explorando", label: "Explorando" },
-      { value: "evaluando", label: "Analizando" },
-      { value: "listo_para_comprar", label: "Listo para comprar" },
-    ],
+    key: "potencial",
+    label: "Potencial",
+    options: [...POTENCIAL_OPTIONS].map((v) => ({ value: v, label: capitalizeFirst(v) })),
   },
 ];
 
@@ -131,25 +124,20 @@ function ClientDetailModal({
   onReanalyze: (id: string) => Promise<void>;
 }) {
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = prev; };
-  }, []);
+  useBodyScrollLock();
 
   const handleReanalyze = async () => {
     setLoading(true);
     try { await onReanalyze(client.id); } finally { setLoading(false); }
   };
 
+  const a = client.analysis;
+
   const metaFields = [
-    { label: "Industria",    value: client.industria },
-    { label: "Tamaño",       value: client.tamanioEmpresa },
-    { label: "Volumen",      value: client.volumenMensajes },
-    { label: "Canal",        value: client.canalDescubrimiento },
-    { label: "Objeciones",   value: client.objeciones },
-    { label: "Etapa",        value: client.etapaDecision },
+    { label: "Industria",  value: a?.industria },
+    { label: "Volumen",    value: a?.volumenMensajes },
+    { label: "Canal",      value: a?.canalDescubrimiento },
+    { label: "Potencial",  value: a?.potencial, colorMap: POTENTIAL_COLORS },
   ];
 
   return (
@@ -181,7 +169,9 @@ function ClientDetailModal({
               }`}>
                 {client.closed ? "Cerrado" : "Abierto"}
               </span>
-              {client.urgencia && <Tag value={client.urgencia} colorMap={URGENCY_COLORS} />}
+              {a?.potencial && (
+                <Tag value={a.potencial} colorMap={POTENTIAL_COLORS} />
+              )}
               {client.leadScore !== null && (
                 <span className="text-xs font-semibold" style={{
                   color: client.leadScore >= 70 ? "#10B981" : client.leadScore >= 40 ? "#F59E0B" : "#EF4444"
@@ -215,37 +205,60 @@ function ClientDetailModal({
           </div>
 
           {/* Análisis IA */}
-          {client.analyzedAt ? (
+          {a ? (
             <div className="bg-[#111111] border border-[#2A2A2A] rounded-xl p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <Brain size={12} className="text-[#A855F7]" />
                 <h4 className="text-xs font-medium text-[#A0A0A0] uppercase tracking-wider">Análisis IA</h4>
               </div>
-              {client.resumenLLM && (
-                <p className="text-xs text-white bg-[#2563EB]/10 border border-[#2563EB]/20 rounded-lg px-3 py-2 leading-relaxed">
-                  {client.resumenLLM}
-                </p>
-              )}
+
+              {/* Lectura de negocio */}
+              <div className="space-y-2">
+                {a.conclusionEjecutiva && (
+                  <p className="text-xs text-white bg-[#2563EB]/10 border border-[#2563EB]/20 rounded-lg px-3 py-2 leading-relaxed">
+                    {a.conclusionEjecutiva}
+                  </p>
+                )}
+                {a.proximaAccion && (
+                  <div className="flex items-start gap-2 bg-[#10B981]/8 border border-[#10B981]/20 rounded-lg px-3 py-2">
+                    <ArrowRight size={11} className="text-[#10B981] mt-0.5 shrink-0" />
+                    <div>
+                      <div className="text-[10px] text-[#10B981] uppercase tracking-wider font-medium mb-0.5">
+                        Próxima acción
+                      </div>
+                      <p className="text-xs text-[#C0C0C0]">{a.proximaAccion}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Meta fields */}
               <div className="grid grid-cols-2 gap-2">
-                {metaFields.map(({ label, value }) => (
+                {metaFields.map(({ label, value, colorMap }) => (
                   <div key={label} className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg px-3 py-2">
                     <div className="text-[10px] text-[#505050] uppercase tracking-wider mb-0.5">{label}</div>
                     <div className="text-xs text-white">
-                      {value ? capitalizeFirst(value) : <span className="text-[#A0A0A0]">—</span>}
+                      {value
+                        ? colorMap
+                          ? <Tag value={value} colorMap={colorMap} />
+                          : capitalizeFirst(value)
+                        : <span className="text-[#A0A0A0]">—</span>
+                      }
                     </div>
                   </div>
                 ))}
               </div>
-              {client.painPoint && (
+
+              {a.painPoint && (
                 <div className="bg-[#A855F7]/5 border border-[#A855F7]/20 rounded-lg px-3 py-2">
                   <div className="text-[10px] text-[#A855F7] uppercase tracking-wider mb-1">Pain Point</div>
-                  <p className="text-xs text-[#C0C0C0]">{client.painPoint}</p>
+                  <p className="text-xs text-[#C0C0C0]">{a.painPoint}</p>
                 </div>
               )}
-              {client.integraciones && (
+              {a.integraciones && (
                 <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg px-3 py-2">
                   <div className="text-[10px] text-[#505050] uppercase tracking-wider mb-0.5">Integraciones</div>
-                  <div className="text-xs text-white">{capitalizeFirst(client.integraciones)}</div>
+                  <div className="text-xs text-white">{capitalizeFirst(a.integraciones)}</div>
                 </div>
               )}
             </div>
@@ -317,7 +330,7 @@ export function ClientsTable({ data, page, filters, onPageChange, onFiltersChang
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-[#2A2A2A]">
-                {["Cliente", "Industria", "Vendedor", "Fecha", "Estado", "Urgencia", ""].map((h) => (
+                {["Cliente", "Industria", "Vendedor", "Fecha", "Estado", "Potencial", ""].map((h) => (
                   <th key={h} className="px-4 py-2.5 text-xs font-medium text-[#505050] uppercase tracking-wider whitespace-nowrap">
                     {h}
                   </th>
@@ -339,7 +352,7 @@ export function ClientsTable({ data, page, filters, onPageChange, onFiltersChang
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <Tag value={client.industria} />
+                    <Tag value={client.analysis?.industria ?? null} />
                   </td>
                   <td className="px-4 py-3 text-sm text-[#A0A0A0]">{client.vendedor}</td>
                   <td className="px-4 py-3 text-xs text-[#A0A0A0] whitespace-nowrap">{formatDate(client.fechaReunion)}</td>
@@ -353,11 +366,15 @@ export function ClientsTable({ data, page, filters, onPageChange, onFiltersChang
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <Tag value={client.urgencia} colorMap={URGENCY_COLORS} />
+                    <div className="flex items-center gap-1.5">
+                      <Tag value={client.analysis?.potencial ?? null} colorMap={POTENTIAL_COLORS} />
+                      {client.leadScore !== null && (
+                        <span className="text-[10px] text-[#505050]">{client.leadScore}pts</span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1.5 justify-end">
-                      {/* Ver */}
                       <button
                         onClick={() => setSelectedClient(client)}
                         className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-[#2563EB]/10 text-[#60A5FA] border border-[#2563EB]/25 hover:bg-[#2563EB]/20 hover:border-[#2563EB]/50 transition-colors cursor-pointer"
@@ -365,21 +382,20 @@ export function ClientsTable({ data, page, filters, onPageChange, onFiltersChang
                         <Eye size={11} />
                         Ver
                       </button>
-                      {/* Analizar / Re-analizar IA */}
                       <button
                         onClick={() => handleReanalyze(client.id)}
                         disabled={reanalyzingId === client.id}
-                        title={client.analyzedAt === null ? "Analizar con IA" : "Re-analizar con IA"}
+                        title={client.analysis === null ? "Analizar con IA" : "Re-analizar con IA"}
                         className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-[#1E1E1E] text-[#A0A0A0] border border-[#2A2A2A] hover:text-white hover:border-[#3A3A3A] disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed"
                       >
                         {reanalyzingId === client.id ? (
                           <RefreshCw size={11} className="animate-spin" />
-                        ) : client.analyzedAt === null ? (
+                        ) : client.analysis === null ? (
                           <Sparkles size={11} />
                         ) : (
                           <RefreshCw size={11} />
                         )}
-                        {client.analyzedAt === null ? "Analizar" : "Re-analizar"}
+                        {client.analysis === null ? "Analizar" : "Re-analizar"}
                       </button>
                     </div>
                   </td>

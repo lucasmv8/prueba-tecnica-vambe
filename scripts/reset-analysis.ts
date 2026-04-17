@@ -17,10 +17,8 @@ const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  const { count } = await prisma.client.updateMany({
-    data: { analyzedAt: null },
-  });
-  console.log(`✓ ${count} clientes marcados como pendientes de análisis.`);
+  const { count } = await prisma.clientAnalysis.deleteMany({});
+  console.log(`✓ ${count} análisis eliminados. Los clientes serán re-analizados en el próximo inicio.`);
 }
 
 main()

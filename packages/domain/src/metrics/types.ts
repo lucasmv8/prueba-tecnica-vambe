@@ -35,17 +35,23 @@ export interface PainPointEntry {
   closeRate: number;
 }
 
-export interface FunnelEntry {
-  stage: string;
-  label: string;
-  total: number;
-  cerrados: number;
-  closeRate: number;
-}
-
 export interface DuplicateEmailGroup {
   correo: string;
   clientes: string[];
+}
+
+export interface AlertEntry {
+  clientId: string;
+  nombre: string;
+  correo: string;
+  vendedor: string;
+  tipo: "potencial_no_cerrado" | "cierre_bajo_potencial";
+  etiqueta: string;
+  severidad: "warning" | "info";
+  industria?: string;
+  painPoint?: string;
+  conclusionEjecutiva?: string;
+  proximaAccion?: string;
 }
 
 export interface MetricsData {
@@ -53,7 +59,7 @@ export interface MetricsData {
   byIndustria: BarChartEntry[];
   byVendedor: BarChartEntry[];
   byMonth: LineChartEntry[];
-  byEtapaDecision: FunnelEntry[];
   duplicateEmails: DuplicateEmailGroup[];
   topPainPoints: PainPointEntry[];
+  alertas: AlertEntry[];
 }

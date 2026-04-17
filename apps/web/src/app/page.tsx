@@ -1,174 +1,33 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import { useDebounce } from "@/hooks/useDebounce";
+import { useState } from "react";
+import { useMetrics } from "@/metrics/hooks/useMetrics";
+import { useClients } from "@/clients/hooks/useClients";
+import { useAnalysis } from "@/analysis/hooks/useAnalysis";
 import { Header } from "@/shared/components/layout/Header";
 import { KPICards } from "@/metrics/components/KPICards";
 import { ChartsSection } from "@/metrics/components/ChartsSection";
 import { DataQualityCard } from "@/metrics/components/DataQualityCard";
+import { AlertsSection } from "@/metrics/components/AlertsSection";
 import { ClientsTable } from "@/clients/components/ClientsTable";
-import type { MetricsData, ClientsResponse, AnalysisProgress, FilterState } from "@vambe/domain";
-
-const EMPTY_METRICS: MetricsData = {
-  kpis: { totalClients: 0, closeRate: 0, topVendedor: "-", topVendedorCloseRate: 0, topIndustria: "-", topIndustriaCloseRate: 0, leadsCalificados: 0, pendingAnalysis: 0 },
-  byIndustria: [],
-  byVendedor: [],
-  byMonth: [],
-  byEtapaDecision: [],
-  duplicateEmails: [],
-  topPainPoints: [],
-};
-
-const EMPTY_CLIENTS: ClientsResponse = {
-  clients: [],
-  total: 0,
-  page: 1,
-  pageSize: 10,
-  totalPages: 0,
-};
 
 type Page = "resumen" | "analisis" | "clientes";
 
 export default function DashboardPage() {
-  const [metrics, setMetrics] = useState<MetricsData>(EMPTY_METRICS);
-  const [clients, setClients] = useState<ClientsResponse>(EMPTY_CLIENTS);
-  const [filters, setFilters] = useState<FilterState>({
-    vendedor: "", industria: "", closed: "", urgencia: "", etapaDecision: "", q: "", page: 1,
-  });
   const [activePage, setActivePage] = useState<Page>("resumen");
-  const [progress, setProgress] = useState<AnalysisProgress>({
-    status: "idle",
-    processed: 0,
-    total: 0,
-  });
-  const [loadingMetrics, setLoadingMetrics] = useState(true);
-  const [loadingClients, setLoadingClients] = useState(true);
-  const analysisRunning = useRef(false);
-  const abortControllerRef = useRef<AbortController | null>(null);
+  const { metrics, loading: loadingMetrics, fetchMetrics } = useMetrics();
+  const { clients, loading: loadingClients, filters, setFilters, fetchClients, refetch } = useClients();
+  const { progress, startAnalysis, stopAnalysis } = useAnalysis();
 
-  const fetchMetrics = useCallback(async () => {
-    const res = await fetch("/api/metrics");
-    const data = await res.json();
-    setMetrics(data);
-    return data as MetricsData;
-  }, []);
-
-  const fetchClients = useCallback(async (f: FilterState) => {
-    setLoadingClients(true);
-    const params = new URLSearchParams();
-    if (f.vendedor) params.set("vendedor", f.vendedor);
-    if (f.industria) params.set("industria", f.industria);
-    if (f.closed) params.set("closed", f.closed);
-    if (f.urgencia) params.set("urgencia", f.urgencia);
-    if (f.etapaDecision) params.set("etapaDecision", f.etapaDecision);
-    if (f.q) params.set("q", f.q);
-    params.set("page", String(f.page));
-    const res = await fetch(`/api/clients?${params}`);
-    const data = await res.json();
-    setClients(data);
-    setLoadingClients(false);
-  }, []);
-
-  const startAnalysis = useCallback(
-    async (force: boolean) => {
-      if (analysisRunning.current) return;
-      analysisRunning.current = true;
-
-      const abort = new AbortController();
-      abortControllerRef.current = abort;
-
-      setProgress({ status: "running", processed: 0, total: 0 });
-
-      try {
-        const res = await fetch("/api/analysis", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ force }),
-          signal: abort.signal,
-        });
-
-        const reader = res.body!.getReader();
-
-        // Cancelar el reader cuando se aborte
-        abort.signal.addEventListener("abort", () => reader.cancel());
-
-        const decoder = new TextDecoder();
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done || abort.signal.aborted) break;
-
-          const text = decoder.decode(value);
-          const lines = text.split("\n").filter((l) => l.startsWith("data: "));
-
-          for (const line of lines) {
-            try {
-              const data = JSON.parse(line.slice(6));
-              if (data.status === "completed") {
-                setProgress((p) => ({ status: "completed", processed: p.total, total: p.total }));
-                await fetchMetrics();
-                setLoadingMetrics(false);
-                await fetchClients(filters);
-              } else if (data.status === "error") {
-                setProgress({ status: "error", processed: 0, total: 0, error: data.error });
-              } else {
-                setProgress({
-                  status: "running",
-                  processed: data.processed,
-                  total: data.total,
-                  currentName: data.currentName,
-                });
-              }
-            } catch {}
-          }
-        }
-      } catch (e: unknown) {
-        // AbortError es intencional — no mostrar como error
-        if ((e as Error)?.name !== "AbortError") {
-          setProgress({ status: "error", processed: 0, total: 0, error: String(e) });
-        }
-      } finally {
-        analysisRunning.current = false;
-        abortControllerRef.current = null;
-        setProgress((p) =>
-          p.status === "running"
-            ? { ...p, status: "idle" }           // fue detenido manualmente
-            : p
-        );
-        setTimeout(() => {
-          setProgress((p) => (p.status === "completed" ? { ...p, status: "idle" } : p));
-        }, 4000);
-      }
-    },
-    [fetchMetrics, fetchClients, filters]
-  );
-
-  // Initial load
-  useEffect(() => {
-    const init = async () => {
-      setLoadingMetrics(true);
+  const handleStartAnalysis = (force: boolean) =>
+    startAnalysis(force, async () => {
       await fetchMetrics();
-      setLoadingMetrics(false);
-      await fetchClients({ vendedor: "", industria: "", closed: "", urgencia: "", etapaDecision: "", q: "", page: 1 });
-
-};
-    init();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const debouncedQ = useDebounce(filters.q, 350);
-
-  // Refetch clients when filters change; search query is debounced to avoid a call per keystroke
-  useEffect(() => {
-    fetchClients({ ...filters, q: debouncedQ });
-  }, [filters.vendedor, filters.industria, filters.closed, filters.urgencia, filters.etapaDecision, filters.page, debouncedQ, fetchClients]); // eslint-disable-line react-hooks/exhaustive-deps
+      await refetch();
+    });
 
   const handleReanalyzeOne = async (id: string) => {
     await fetch(`/api/analysis/${id}`, { method: "POST" });
-    await Promise.all([fetchClients(filters), fetchMetrics()]);
-  };
-
-  const stopAnalysis = () => {
-    abortControllerRef.current?.abort();
+    await Promise.all([fetchMetrics(), refetch()]);
   };
 
   return (
@@ -177,8 +36,8 @@ export default function DashboardPage() {
         pendingCount={metrics.kpis.pendingAnalysis}
         totalClients={metrics.kpis.totalClients}
         progress={progress}
-        onAnalyzePending={() => startAnalysis(false)}
-        onReanalyzeAll={() => startAnalysis(true)}
+        onAnalyzePending={() => handleStartAnalysis(false)}
+        onReanalyzeAll={() => handleStartAnalysis(true)}
         onStop={stopAnalysis}
         activePage={activePage}
         onPageChange={setActivePage}
@@ -197,6 +56,10 @@ export default function DashboardPage() {
               </div>
             ) : (
               <KPICards kpis={metrics.kpis} />
+            )}
+
+            {!loadingMetrics && metrics.alertas.length > 0 && (
+              <AlertsSection alertas={metrics.alertas} />
             )}
 
             {!loadingMetrics && (

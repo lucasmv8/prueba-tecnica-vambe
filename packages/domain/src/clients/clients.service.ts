@@ -1,17 +1,14 @@
 import { prisma, type Prisma } from "@vambe/database";
 import type { ClientFilters, ClientsResponse } from "./types";
 
-function computeLeadScore(c: {
-  urgencia: string | null;
-  etapaDecision: string | null;
-  volumenMensajes: string | null;
-  analyzedAt: Date | null;
-}): number | null {
-  if (!c.analyzedAt) return null;
-  const u = { alta: 45, media: 28, baja: 10 }[c.urgencia ?? ""] ?? 0;
-  const e = { listo_para_comprar: 40, evaluando: 22, explorando: 8 }[c.etapaDecision ?? ""] ?? 0;
-  const v = { alto: 15, medio: 7, bajo: 2 }[c.volumenMensajes ?? ""] ?? 0;
-  return u + e + v;
+function computeLeadScore(analysis: {
+  potencial: string;
+  volumenMensajes: string;
+} | null): number | null {
+  if (!analysis) return null;
+  const p = { alta: 60, media: 35, baja: 10 }[analysis.potencial] ?? 0;
+  const v = { alto: 40, medio: 22, bajo: 8 }[analysis.volumenMensajes] ?? 0;
+  return p + v;
 }
 
 export async function getClients(filters: ClientFilters): Promise<ClientsResponse> {
@@ -19,8 +16,7 @@ export async function getClients(filters: ClientFilters): Promise<ClientsRespons
     vendedor,
     industria,
     closed,
-    urgencia,
-    etapaDecision,
+    potencial,
     q,
     painPoint,
     calificado,
@@ -29,28 +25,27 @@ export async function getClients(filters: ClientFilters): Promise<ClientsRespons
   } = filters;
 
   const where: Prisma.ClientWhereInput = {};
+  const analysisFilter: Prisma.ClientAnalysisWhereInput = {};
 
   if (calificado) {
     where.closed = false;
-    where.analyzedAt = { not: null };
-    where.OR = [
-      { urgencia: "alta" },
-      { etapaDecision: "evaluando" },
-      { etapaDecision: "listo_para_comprar" },
-    ];
+    analysisFilter.potencial = "alta";
   } else {
     if (vendedor) where.vendedor = vendedor;
-    if (industria) where.industria = industria;
-    if (urgencia) where.urgencia = urgencia;
-    if (etapaDecision) where.etapaDecision = etapaDecision;
     if (closed !== undefined && closed !== "") where.closed = closed === "true";
-    if (painPoint) where.painPoint = { contains: painPoint };
+    if (industria) analysisFilter.industria = industria;
+    if (potencial) analysisFilter.potencial = potencial;
+    if (painPoint) analysisFilter.painPoint = { contains: painPoint };
+  }
+
+  if (Object.keys(analysisFilter).length > 0) {
+    where.analysis = { is: analysisFilter };
   }
 
   if (q) {
     where.OR = [
-      { nombre: { contains: q } },
-      { correo: { contains: q } },
+      { nombre: { contains: q, mode: "insensitive" } },
+      { correo: { contains: q, mode: "insensitive" } },
     ];
   }
 
@@ -58,6 +53,7 @@ export async function getClients(filters: ClientFilters): Promise<ClientsRespons
     prisma.client.count({ where }),
     prisma.client.findMany({
       where,
+      include: { analysis: true },
       orderBy: { fechaReunion: "desc" },
       skip: (page - 1) * pageSize,
       take: pageSize,
@@ -66,10 +62,19 @@ export async function getClients(filters: ClientFilters): Promise<ClientsRespons
 
   return {
     clients: clients.map((c) => ({
-      ...c,
+      id: c.id,
+      nombre: c.nombre,
+      correo: c.correo,
+      telefono: c.telefono,
       fechaReunion: c.fechaReunion.toISOString(),
-      analyzedAt: c.analyzedAt?.toISOString() ?? null,
-      leadScore: computeLeadScore(c),
+      vendedor: c.vendedor,
+      closed: c.closed,
+      transcripcion: c.transcripcion,
+      hasDuplicateEmail: c.hasDuplicateEmail,
+      analysis: c.analysis
+        ? { ...c.analysis, analyzedAt: c.analysis.analyzedAt.toISOString() }
+        : null,
+      leadScore: computeLeadScore(c.analysis),
     })),
     total,
     page,

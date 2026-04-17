@@ -1,57 +1,23 @@
 "use client";
 
 import { Brain, ChevronDown, X, Users, AlertCircle, Loader2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+import { useFetchWithLoading } from "@/hooks/useFetchWithLoading";
 import type { PainPointEntry, Client } from "@vambe/domain";
 import { capitalizeFirst } from "@vambe/ui-system";
+import { ClientListRow } from "@/shared/components/ClientListRow";
+import { ModalContainer } from "@/shared/components/ModalContainer";
+import { ToggleGroup } from "@/shared/components/ToggleGroup";
 
 interface PainPointsCloudProps {
   painPoints: PainPointEntry[];
 }
 
-const URGENCIA_DOT: Record<string, string> = {
-  alta:  "#F87171",
-  media: "#FACC15",
-  baja:  "#4ADE80",
-};
-
 function closeRateColor(rate: number) {
   if (rate >= 60) return { text: "#4ADE80", bg: "#4ADE8015", border: "#4ADE8030" };
   if (rate >= 35) return { text: "#FACC15", bg: "#FACC1515", border: "#FACC1530" };
   return { text: "#F87171", bg: "#F8717115", border: "#F8717130" };
-}
-
-// ─── Client Row ────────────────────────────────────────────────────────────
-
-function ClientRow({ client }: { client: Client }) {
-  const urgColor = URGENCIA_DOT[client.urgencia ?? ""] ?? "#606060";
-  return (
-    <div className="flex flex-col gap-1.5 px-4 py-3 border-b border-[#1E1E1E] last:border-0 hover:bg-[#1A1A1A] transition-colors">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span
-              className="w-2 h-2 rounded-full shrink-0"
-              style={{ backgroundColor: urgColor }}
-              title={`Urgencia: ${client.urgencia ?? "—"}`}
-            />
-            <span className="text-sm font-medium text-white truncate">{client.nombre}</span>
-          </div>
-          <span className="text-xs text-[#606060] ml-4">{client.vendedor}</span>
-        </div>
-        {client.leadScore !== null && (
-          <span className="text-xs font-medium text-[#A855F7] shrink-0" title="Lead Score">
-            {client.leadScore}pts
-          </span>
-        )}
-      </div>
-      {client.resumenLLM && (
-        <p className="text-xs text-[#808080] leading-relaxed ml-4 line-clamp-2">
-          {client.resumenLLM}
-        </p>
-      )}
-    </div>
-  );
 }
 
 // ─── Modal ─────────────────────────────────────────────────────────────────
@@ -67,43 +33,19 @@ function PainPointModal({
   closeRate: number;
   onClose: () => void;
 }) {
-  const [clients, setClients] = useState<Client[] | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = ""; };
-  }, []);
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const params = new URLSearchParams({ painPoint, pageSize: "50" });
-        const res = await fetch(`/api/clients?${params}`);
-        const data = await res.json();
-        setClients(data.clients ?? []);
-      } catch {
-        setError("No se pudieron cargar los clientes");
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+  useBodyScrollLock();
+  const fetcher = useCallback(async () => {
+    const params = new URLSearchParams({ painPoint, pageSize: "50" });
+    const res = await fetch(`/api/clients?${params}`);
+    const data = await res.json();
+    return (data.clients ?? []) as Client[];
   }, [painPoint]);
+  const { data: clients, loading, error } = useFetchWithLoading(fetcher);
 
   const rateColors = closeRateColor(closeRate);
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      onClick={onClose}
-    >
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
-      <div
-        className="relative z-10 w-full max-w-lg bg-[#161616] border border-[#2A2A2A] rounded-xl shadow-2xl flex flex-col max-h-[80vh]"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <ModalContainer onClose={onClose}>
         {/* Header */}
         <div className="flex items-start gap-3 px-5 py-4 border-b border-[#2A2A2A]">
           <div className="mt-0.5 p-1.5 rounded-lg bg-[#A855F7]/10">
@@ -153,7 +95,11 @@ function PainPointModal({
           {clients && clients.length > 0 && (
             <div>
               {clients.map((c) => (
-                <ClientRow key={c.id} client={c} />
+                <ClientListRow
+                  key={c.id}
+                  client={c}
+                  infoText={c.analysis?.conclusionEjecutiva}
+                />
               ))}
             </div>
           )}
@@ -163,14 +109,13 @@ function PainPointModal({
         {clients && clients.length > 0 && (
           <div className="px-5 py-3 border-t border-[#1E1E1E]">
             <p className="text-xs text-[#505050]">
-              Urgencia: <span style={{ color: "#F87171" }}>•</span> alta &nbsp;
-              <span style={{ color: "#FACC15" }}>•</span> media &nbsp;
-              <span style={{ color: "#4ADE80" }}>•</span> baja
+              Potencial: <span style={{ color: "#10B981" }}>•</span> alto &nbsp;
+              <span style={{ color: "#F59E0B" }}>•</span> medio &nbsp;
+              <span style={{ color: "#EF4444" }}>•</span> bajo
             </p>
           </div>
         )}
-      </div>
-    </div>
+    </ModalContainer>
   );
 }
 
@@ -216,29 +161,15 @@ export function PainPointsCloud({ painPoints }: PainPointsCloudProps) {
           </button>
 
           <div className="flex items-center gap-2 shrink-0">
-            {/* Toggle */}
-            <div className="flex items-center bg-[#1E1E1E] border border-[#2A2A2A] rounded-lg p-0.5 text-xs">
-              <button
-                onClick={() => setViewMode("frecuencia")}
-                className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
-                  viewMode === "frecuencia"
-                    ? "bg-[#A855F7] text-white font-medium"
-                    : "text-[#606060] hover:text-[#A0A0A0]"
-                }`}
-              >
-                Frecuencia
-              </button>
-              <button
-                onClick={() => setViewMode("conversion")}
-                className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
-                  viewMode === "conversion"
-                    ? "bg-[#A855F7] text-white font-medium"
-                    : "text-[#606060] hover:text-[#A0A0A0]"
-                }`}
-              >
-                Conversión
-              </button>
-            </div>
+            <ToggleGroup
+              options={[
+                { value: "frecuencia" as ViewMode, label: "Frecuencia" },
+                { value: "conversion" as ViewMode, label: "Conversión" },
+              ]}
+              value={viewMode}
+              onChange={setViewMode}
+              activeColor="#A855F7"
+            />
 
             <span className="text-xs text-[#A855F7] bg-[#A855F718] border border-[#A855F730] rounded-full px-2 py-0.5">
               Extraído por IA
