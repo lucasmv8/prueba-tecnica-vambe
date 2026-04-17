@@ -66,33 +66,20 @@ export function Header({
         {/* Top row — always visible */}
         <div className="flex items-center justify-between w-full">
           {/* Logo */}
-          <div className="flex items-center gap-2 shrink-0">
-            <svg width="20" height="20" viewBox="0 0 22 22" fill="none" className="shrink-0 text-foreground">
-              <path
-                d="M11 1L21 11L11 21L1 11L11 1Z"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                fill="none"
-              />
-            </svg>
-            <div className="flex flex-col justify-center">
-              <div className="flex items-center gap-0">
-                <span className="font-semibold text-foreground text-[14px] tracking-tight">
-                  vambe
-                </span>
-                <span className="mx-2 select-none text-border">·</span>
-                <span className="text-muted-foreground text-xs font-medium hidden sm:block">
-                  Sales Intelligence
-                </span>
-              </div>
-              {isAnalyzing && (
-                <span className="text-[10px] text-muted-foreground truncate max-w-[180px]">
-                  {progress.currentName
-                    ? `Analizando — ${progress.currentName}`
-                    : "Preparando análisis…"}
-                </span>
-              )}
-            </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <img src="/logo-vambe.svg" alt="Vambe" height={22} className="h-[22px] w-auto" />
+            {!isAnalyzing && (
+              <span className="text-muted-foreground text-xs font-medium hidden sm:block">
+                Sales Intelligence
+              </span>
+            )}
+            {isAnalyzing && (
+              <span className="text-[10px] text-muted-foreground truncate max-w-[180px]">
+                {progress.currentName
+                  ? `Analizando — ${progress.currentName}`
+                  : "Preparando análisis…"}
+              </span>
+            )}
           </div>
 
           {/* Tabs — hidden while analyzing on small screens */}
